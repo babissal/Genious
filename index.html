@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Παιχνίδι Γνώσεων</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ========== ΟΘΟΝΗ ΡΥΘΜΙΣΕΩΝ ========== -->
+    <section id="screen-setup" class="screen active">
+      <header class="title-block">
+        <h1>🧠 Παιχνίδι Γνώσεων</h1>
+        <p class="subtitle">Για ενήλικες · Παίξτε σε ομάδες με μία συσκευή</p>
+      </header>
+
+      <div class="card">
+        <h2>1. Ομάδες</h2>
+        <div class="field">
+          <label for="team-count">Αριθμός ομάδων</label>
+          <select id="team-count">
+            <option value="2">2 ομάδες</option>
+            <option value="3">3 ομάδες</option>
+            <option value="4">4 ομάδες</option>
+            <option value="5">5 ομάδες</option>
+            <option value="6">6 ομάδες</option>
+          </select>
+        </div>
+        <div id="team-names" class="team-names"></div>
+      </div>
+
+      <div class="card">
+        <h2>2. Κατηγορίες ερωτήσεων</h2>
+        <p class="hint">Επίλεξε ποιες κατηγορίες θα παίξετε.</p>
+        <div id="category-list" class="category-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>3. Κανόνες παιχνιδιού</h2>
+        <div class="field">
+          <label for="questions-per-team">Ερωτήσεις ανά ομάδα</label>
+          <select id="questions-per-team">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="timer-seconds">Χρόνος ανά ερώτηση</label>
+          <select id="timer-seconds">
+            <option value="15">15 δευτερόλεπτα</option>
+            <option value="20" selected>20 δευτερόλεπτα</option>
+            <option value="30">30 δευτερόλεπτα</option>
+            <option value="45">45 δευτερόλεπτα</option>
+          </select>
+        </div>
+        <div class="field checkbox-field">
+          <label><input type="checkbox" id="time-bonus" checked /> Μπόνους πόντων για γρήγορη απάντηση</label>
+        </div>
+      </div>
+
+      <p id="setup-error" class="error-msg" hidden></p>
+      <button id="btn-start" class="btn btn-primary btn-big">▶ Έναρξη παιχνιδιού</button>
+    </section>
+
+    <!-- ========== ΟΘΟΝΗ ΠΑΙΧΝΙΔΙΟΥ ========== -->
+    <section id="screen-game" class="screen">
+      <div class="game-topbar">
+        <div class="turn-info">
+          <span class="turn-label">Σειρά:</span>
+          <span id="current-team" class="current-team">—</span>
+        </div>
+        <div class="progress-info">
+          <span id="round-info">Γύρος 1</span>
+        </div>
+      </div>
+
+      <div id="scoreboard-mini" class="scoreboard-mini"></div>
+
+      <div class="card question-card">
+        <div class="question-meta">
+          <span id="category-badge" class="badge">Κατηγορία</span>
+          <span id="timer" class="timer">20</span>
+        </div>
+        <div class="timer-bar-wrap">
+          <div id="timer-bar" class="timer-bar"></div>
+        </div>
+        <h2 id="question-text" class="question-text">Ερώτηση…</h2>
+        <div id="answers" class="answers"></div>
+        <div id="feedback" class="feedback" hidden></div>
+        <button id="btn-next" class="btn btn-primary btn-big" hidden>Επόμενη ➜</button>
+      </div>
+    </section>
+
+    <!-- ========== ΟΘΟΝΗ ΑΠΟΤΕΛΕΣΜΑΤΩΝ ========== -->
+    <section id="screen-end" class="screen">
+      <header class="title-block">
+        <h1>🏆 Τελικά Αποτελέσματα</h1>
+      </header>
+      <div id="winner-banner" class="winner-banner"></div>
+      <div class="card">
+        <ol id="final-scoreboard" class="final-scoreboard"></ol>
+      </div>
+      <button id="btn-restart" class="btn btn-primary btn-big">↻ Νέο παιχνίδι</button>
+    </section>
+
+  </div>
+
+  <script src="questions.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

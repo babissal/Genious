@@ -10,6 +10,7 @@ const state = {
   teams: [],            // { name, color, score }
   questions: [],        // λίστα ερωτήσεων του παιχνιδιού
   current: 0,           // δείκτης τρέχουσας ερώτησης
+  questionsPerTeam: 0,  // ερωτήσεις ανά ομάδα
   timerSeconds: 20,
   timeBonus: true,
   timeLeft: 0,
@@ -146,6 +147,7 @@ function startGame() {
   state.teams = teams;
   state.questions = selected;
   state.current = 0;
+  state.questionsPerTeam = perTeam;
   state.timerSeconds = parseInt($("timer-seconds").value, 10);
   state.timeBonus = $("time-bonus").checked;
 
@@ -156,7 +158,8 @@ function startGame() {
 // ===================== ΟΘΟΝΗ ΠΑΙΧΝΙΔΙΟΥ =====================
 
 function currentTeamIndex() {
-  return state.current % state.teams.length;
+  // Κάθε ομάδα ολοκληρώνει όλες τις ερωτήσεις της πριν ξεκινήσει η επόμενη.
+  return Math.floor(state.current / state.questionsPerTeam);
 }
 
 function renderScoreboardMini() {
@@ -180,14 +183,13 @@ function renderQuestion() {
 
   const q = state.questions[state.current];
   const team = state.teams[currentTeamIndex()];
-  const roundNum = Math.floor(state.current / state.teams.length) + 1;
-  const totalRounds = state.questions.length / state.teams.length;
+  const questionInTeam = (state.current % state.questionsPerTeam) + 1;
 
   // Topbar
   const ct = $("current-team");
   ct.textContent = team.name;
   ct.style.color = team.color;
-  $("round-info").textContent = "Γύρος " + roundNum + " / " + totalRounds;
+  $("round-info").textContent = "Ερώτηση " + questionInTeam + " / " + state.questionsPerTeam;
 
   renderScoreboardMini();
 

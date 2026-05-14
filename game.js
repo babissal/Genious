@@ -3,18 +3,19 @@
 // ----- Σταθερές -----
 const TEAM_COLORS = ["#ff6b6b", "#4dabf7", "#ffd43b", "#69db7c", "#da77f2", "#ff922b"];
 const BASE_POINTS = 100;          // πόντοι για σωστή απάντηση
-const BONUS_PER_SECOND = 5;       // μπόνους ανά δευτερόλεπτο που απομένει
+const BONUS_PER_SECOND = 5;       // μπόνους ανά δευτερόλεπτο που απομένει στην αποκάλυψη
 
 // ----- Κατάσταση παιχνιδιού -----
 const state = {
   teams: [],            // { name, color, score }
-  questions: [],        // λίστα ερωτήσεων του παιχνιδιού (με ανακατεμένες επιλογές)
+  questions: [],        // λίστα ερωτήσεων του παιχνιδιού
   current: 0,           // δείκτης τρέχουσας ερώτησης
   timerSeconds: 20,
   timeBonus: true,
   timeLeft: 0,
   intervalId: null,
-  answered: false,
+  revealed: false,      // έχει αποκαλυφθεί η απάντηση;
+  judged: false,        // έχει κριθεί σωστή/λάθος;
 };
 
 // ----- Βοηθητικά -----
@@ -33,6 +34,12 @@ function showScreen(id) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
   $(id).classList.add("active");
   window.scrollTo(0, 0);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function getCategories() {
@@ -136,19 +143,8 @@ function startGame() {
     selected.push(pool.pop());
   }
 
-  // Ανακάτεμα των επιλογών κάθε ερώτησης
-  state.questions = selected.map((q) => {
-    const correctText = q.options[q.correct];
-    const opts = shuffle(q.options);
-    return {
-      category: q.category,
-      q: q.q,
-      options: opts,
-      correct: opts.indexOf(correctText),
-    };
-  });
-
   state.teams = teams;
+  state.questions = selected;
   state.current = 0;
   state.timerSeconds = parseInt($("timer-seconds").value, 10);
   state.timeBonus = $("time-bonus").checked;
@@ -172,20 +168,16 @@ function renderScoreboardMini() {
     chip.className = "score-chip" + (i === activeIdx ? " active" : "");
     chip.innerHTML =
       '<span class="dot" style="background:' + t.color + '"></span>' +
-      '<span class="tname">' + escapeHtml(t.name) + '</span>' +
-      '<span class="pts">' + t.score + '</span>';
+      '<span class="tname">' + escapeHtml(t.name) + "</span>" +
+      '<span class="pts">' + t.score + "</span>";
     container.appendChild(chip);
   });
 }
 
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
-
 function renderQuestion() {
-  state.answered = false;
+  state.revealed = false;
+  state.judged = false;
+
   const q = state.questions[state.current];
   const team = state.teams[currentTeamIndex()];
   const roundNum = Math.floor(state.current / state.teams.length) + 1;
@@ -203,19 +195,11 @@ function renderQuestion() {
   $("category-badge").textContent = q.category;
   $("question-text").textContent = q.q;
 
-  // Απαντήσεις
-  const answersEl = $("answers");
-  answersEl.innerHTML = "";
-  const letters = ["Α", "Β", "Γ", "Δ"];
-  q.options.forEach((opt, i) => {
-    const btn = document.createElement("button");
-    btn.className = "answer-btn";
-    btn.innerHTML = '<span class="letter">' + letters[i] + "</span>" + escapeHtml(opt);
-    btn.addEventListener("click", () => handleAnswer(i));
-    answersEl.appendChild(btn);
-  });
-
-  // Επαναφορά feedback / κουμπιού
+  // Επαναφορά UI
+  $("btn-reveal").hidden = false;
+  $("answer-reveal").hidden = true;
+  $("answer-text").textContent = "";
+  $("judge-buttons").hidden = true;
   const fb = $("feedback");
   fb.hidden = true;
   fb.className = "feedback";
@@ -233,7 +217,7 @@ function startTimer() {
     updateTimerUI();
     if (state.timeLeft <= 0) {
       clearInterval(state.intervalId);
-      handleAnswer(-1); // λήξη χρόνου
+      revealAnswer(); // λήξη χρόνου -> αυτόματη αποκάλυψη
     }
   }, 1000);
 }
@@ -249,23 +233,24 @@ function updateTimerUI() {
   barEl.classList.toggle("low", low);
 }
 
-function handleAnswer(choiceIndex) {
-  if (state.answered) return;
-  state.answered = true;
+function revealAnswer() {
+  if (state.revealed) return;
+  state.revealed = true;
   clearInterval(state.intervalId);
 
   const q = state.questions[state.current];
-  const team = state.teams[currentTeamIndex()];
-  const buttons = [...document.querySelectorAll(".answer-btn")];
-  buttons.forEach((b, i) => {
-    b.disabled = true;
-    if (i === q.correct) b.classList.add("correct");
-    if (i === choiceIndex && i !== q.correct) b.classList.add("wrong");
-  });
+  $("answer-text").textContent = q.answer;
+  $("answer-reveal").hidden = false;
+  $("btn-reveal").hidden = true;
+  $("judge-buttons").hidden = false;
+}
 
+function judgeAnswer(isCorrect) {
+  if (!state.revealed || state.judged) return;
+  state.judged = true;
+
+  const team = state.teams[currentTeamIndex()];
   const fb = $("feedback");
-  const isCorrect = choiceIndex === q.correct;
-  const timedOut = choiceIndex === -1;
 
   if (isCorrect) {
     let earned = BASE_POINTS;
@@ -273,15 +258,13 @@ function handleAnswer(choiceIndex) {
     team.score += earned;
     fb.textContent = "✅ Σωστά! +" + earned + " πόντοι για «" + team.name + "»";
     fb.classList.add("good");
-  } else if (timedOut) {
-    fb.textContent = "⏱ Τέλος χρόνου! Σωστή απάντηση: " + q.options[q.correct];
-    fb.classList.add("bad");
   } else {
-    fb.textContent = "❌ Λάθος. Σωστή απάντηση: " + q.options[q.correct];
+    fb.textContent = "❌ Λάθος. Καμία αλλαγή στους πόντους της ομάδας «" + team.name + "»";
     fb.classList.add("bad");
   }
   fb.hidden = false;
 
+  $("judge-buttons").hidden = true;
   renderScoreboardMini();
 
   const nextBtn = $("btn-next");
@@ -344,6 +327,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("team-count").addEventListener("change", renderTeamNameInputs);
   $("btn-start").addEventListener("click", startGame);
+  $("btn-reveal").addEventListener("click", revealAnswer);
+  $("btn-correct").addEventListener("click", () => judgeAnswer(true));
+  $("btn-wrong").addEventListener("click", () => judgeAnswer(false));
   $("btn-next").addEventListener("click", nextQuestion);
   $("btn-restart").addEventListener("click", restart);
 });

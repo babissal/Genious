@@ -159,28 +159,28 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary)
 
 .question-text { font-size: 1.3rem; line-height: 1.4; margin-bottom: 20px; }
 
-.answers { display: grid; gap: 10px; }
-.answer-btn {
-  text-align: left;
-  background: var(--card-2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text);
-  padding: 14px 16px;
-  border-radius: 12px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.12s ease, transform 0.05s ease;
+.answer-reveal {
+  display: flex; flex-direction: column; gap: 6px;
+  background: rgba(0, 210, 168, 0.12);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-top: 4px;
+  animation: fade 0.2s ease;
 }
-.answer-btn:hover:not(:disabled) { background: #353e78; }
-.answer-btn:active:not(:disabled) { transform: scale(0.99); }
-.answer-btn:disabled { cursor: default; }
-.answer-btn.correct { background: var(--correct); border-color: var(--correct); color: #fff; font-weight: 700; }
-.answer-btn.wrong { background: var(--wrong); border-color: var(--wrong); color: #fff; }
-.answer-btn .letter {
-  display: inline-block; width: 26px; height: 26px; line-height: 26px;
-  text-align: center; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12); margin-right: 10px; font-weight: 700;
+.answer-label {
+  color: var(--accent); font-size: 0.82rem;
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;
 }
+.answer-text { font-size: 1.35rem; font-weight: 700; line-height: 1.35; }
+
+.judge-buttons { margin-top: 18px; animation: fade 0.2s ease; }
+.judge-prompt { text-align: center; color: var(--muted); margin-bottom: 10px; }
+.judge-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-judge { padding: 16px; font-size: 1.05rem; }
+.btn-yes { background: linear-gradient(135deg, #1f9d57, var(--correct)); }
+.btn-no { background: linear-gradient(135deg, #c43c3d, var(--wrong)); }
+.btn-judge:hover { filter: brightness(1.08); }
 
 .feedback {
   margin-top: 18px; padding: 14px; border-radius: 12px;

@@ -14,6 +14,7 @@
       <header class="title-block">
         <h1>🧠 Παιχνίδι Γνώσεων</h1>
         <p class="subtitle">Για ενήλικες · Παίξτε σε ομάδες με μία συσκευή</p>
+        <p class="subtitle">Η ομάδα λέει την απάντηση φωναχτά · ο διαχειριστής την αποκαλύπτει και κρίνει αν ήταν σωστή</p>
       </header>
 
       <div class="card">
@@ -89,7 +90,22 @@
           <div id="timer-bar" class="timer-bar"></div>
         </div>
         <h2 id="question-text" class="question-text">Ερώτηση…</h2>
-        <div id="answers" class="answers"></div>
+
+        <button id="btn-reveal" class="btn btn-primary btn-big">👁 Δες την απάντηση</button>
+
+        <div id="answer-reveal" class="answer-reveal" hidden>
+          <span class="answer-label">Σωστή απάντηση</span>
+          <span id="answer-text" class="answer-text"></span>
+        </div>
+
+        <div id="judge-buttons" class="judge-buttons" hidden>
+          <p class="judge-prompt">Απάντησε σωστά η ομάδα;</p>
+          <div class="judge-row">
+            <button id="btn-wrong" class="btn btn-judge btn-no">❌ Λάθος</button>
+            <button id="btn-correct" class="btn btn-judge btn-yes">✅ Σωστό</button>
+          </div>
+        </div>
+
         <div id="feedback" class="feedback" hidden></div>
         <button id="btn-next" class="btn btn-primary btn-big" hidden>Επόμενη ➜</button>
       </div>

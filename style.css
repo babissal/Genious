@@ -131,7 +131,8 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary)
 .score-chip .pts { font-weight: 700; }
 
 .question-card { padding: 22px; }
-.question-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.question-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .badge {
   background: var(--primary);
   color: #fff;
@@ -140,6 +141,9 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary)
   font-size: 0.82rem;
   font-weight: 600;
 }
+.badge.diff-1 { background: #1f9d57; }
+.badge.diff-2 { background: #d99a2b; color: #1a1a1a; }
+.badge.diff-3 { background: #c43c3d; }
 .timer {
   font-size: 1.3rem; font-weight: 800;
   min-width: 44px; text-align: right;

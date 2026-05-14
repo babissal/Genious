@@ -2,7 +2,9 @@
 
 // ----- Σταθερές -----
 const TEAM_COLORS = ["#ff6b6b", "#4dabf7", "#ffd43b", "#69db7c", "#da77f2", "#ff922b"];
-const BASE_POINTS = 100;          // πόντοι για σωστή απάντηση
+// Πόντοι ανά επίπεδο δυσκολίας (1=εύκολη, 2=μέτρια, 3=δύσκολη)
+const POINTS_BY_DIFFICULTY = { 1: 100, 2: 150, 3: 250 };
+const DIFFICULTY_LABELS = { 1: "Εύκολη", 2: "Μέτρια", 3: "Δύσκολη" };
 const BONUS_PER_SECOND = 5;       // μπόνους ανά δευτερόλεπτο που απομένει στην αποκάλυψη
 
 // ----- Κατάσταση παιχνιδιού -----
@@ -107,6 +109,41 @@ function getSelectedCategories() {
   return [...document.querySelectorAll("#category-list input:checked")].map((cb) => cb.value);
 }
 
+// Χτίζει τη λίστα ερωτήσεων ώστε κάθε ομάδα να έχει την ίδια σύνθεση δυσκολίας.
+function buildBalancedQuestions(cats, perTeam, numTeams) {
+  const fullByLevel = { 1: [], 2: [], 3: [] };
+  QUESTIONS.forEach((q) => {
+    if (cats.includes(q.category)) fullByLevel[q.d].push(q);
+  });
+
+  const levels = [1, 2, 3].filter((l) => fullByLevel[l].length > 0);
+  const buckets = {};
+  levels.forEach((l) => { buckets[l] = shuffle(fullByLevel[l]); });
+
+  // Πόσες ερωτήσεις κάθε δυσκολίας ανά ομάδα — όσο πιο ισομερώς γίνεται.
+  const counts = {};
+  const baseCount = Math.floor(perTeam / levels.length);
+  levels.forEach((l) => { counts[l] = baseCount; });
+  const leftover = perTeam - baseCount * levels.length;
+  for (let i = 0; i < leftover; i++) counts[levels[i]]++;
+
+  // Τραβάει ερώτηση δυσκολίας level· αν αδειάσει ο κουβάς, ανακυκλώνει.
+  function draw(level) {
+    if (buckets[level].length === 0) buckets[level] = shuffle(fullByLevel[level]);
+    return buckets[level].pop();
+  }
+
+  const selected = [];
+  for (let t = 0; t < numTeams; t++) {
+    const teamQs = [];
+    levels.forEach((l) => {
+      for (let i = 0; i < counts[l]; i++) teamQs.push(draw(l));
+    });
+    shuffle(teamQs).forEach((q) => selected.push(q));
+  }
+  return selected;
+}
+
 function startGame() {
   const errorEl = $("setup-error");
   errorEl.hidden = true;
@@ -127,22 +164,16 @@ function startGame() {
   }
 
   const perTeam = parseInt($("questions-per-team").value, 10);
-  const totalNeeded = perTeam * teams.length;
 
   // Δεξαμενή ερωτήσεων από τις επιλεγμένες κατηγορίες
-  let pool = shuffle(QUESTIONS.filter((q) => cats.includes(q.category)));
-  if (pool.length === 0) {
+  if (QUESTIONS.filter((q) => cats.includes(q.category)).length === 0) {
     errorEl.textContent = "Δεν υπάρχουν ερωτήσεις στις επιλεγμένες κατηγορίες.";
     errorEl.hidden = false;
     return;
   }
 
-  // Αν δεν φτάνουν, ανακυκλώνουμε ώστε να καλυφθεί ο αριθμός
-  const selected = [];
-  while (selected.length < totalNeeded) {
-    if (pool.length === 0) pool = shuffle(QUESTIONS.filter((q) => cats.includes(q.category)));
-    selected.push(pool.pop());
-  }
+  // Ισορροπημένη επιλογή: κάθε ομάδα παίρνει την ίδια σύνθεση δυσκολίας.
+  const selected = buildBalancedQuestions(cats, perTeam, teams.length);
 
   state.teams = teams;
   state.questions = selected;
@@ -195,6 +226,9 @@ function renderQuestion() {
 
   // Ερώτηση
   $("category-badge").textContent = q.category;
+  const diffBadge = $("difficulty-badge");
+  diffBadge.textContent = DIFFICULTY_LABELS[q.d] + " · " + (POINTS_BY_DIFFICULTY[q.d] || 100) + " πόντοι";
+  diffBadge.className = "badge diff diff-" + q.d;
   $("question-text").textContent = q.q;
 
   // Επαναφορά UI
@@ -251,11 +285,12 @@ function judgeAnswer(isCorrect) {
   if (!state.revealed || state.judged) return;
   state.judged = true;
 
+  const q = state.questions[state.current];
   const team = state.teams[currentTeamIndex()];
   const fb = $("feedback");
 
   if (isCorrect) {
-    let earned = BASE_POINTS;
+    let earned = POINTS_BY_DIFFICULTY[q.d] || 100;
     if (state.timeBonus) earned += state.timeLeft * BONUS_PER_SECOND;
     team.score += earned;
     fb.textContent = "✅ Σωστά! +" + earned + " πόντοι για «" + team.name + "»";
